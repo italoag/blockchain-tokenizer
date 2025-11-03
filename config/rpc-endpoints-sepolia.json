@@ -1,0 +1,11 @@
+{
+  "publicEndpoints": [
+    "https://ethereum-sepolia.publicnode.com",
+    "https://rpc.ankr.com/eth_sepolia",
+    "https://sepolia.gateway.tenderly.co",
+    "https://rpc2.sepolia.org"
+  ],
+  "privateEndpoints": [
+    "http://localhost:8545"
+  ]
+}

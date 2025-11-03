@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: blockchain-tokenizer-test
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: blockchain-tokenizer-test-group
+
+blockchain:
+  rpc:
+    config-path: ./config/rpc-endpoints-sepolia.json
+    request-timeout: 5000
+    connection-timeout: 3000
+    max-retry-attempts: 2
+    retry-delay-ms: 500
+
+  chain:
+    id: 11155111  # Sepolia testnet
+    network-name: sepolia
+
+  gas:
+    price-buffer-percentage: 5
+    limit-buffer-percentage: 10
+
+  nonce:
+    cache-ttl-seconds: 60
+    lock-timeout-seconds: 5
+
+logging:
+  level:
+    com.blockchain.tokenizer: DEBUG

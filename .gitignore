@@ -1,0 +1,68 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.swp
+*.bak
+*.tmp
+*.orig
+*~.nib
+.settings/
+.loadpath
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Spring Boot
+spring-boot-*.log
+
+# Secrets and Configuration
+*.env
+.env.local
+.env.*.local
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+
+# Logs
+logs/
+*.log
+*.gz
+
+# Testing
+.testcontainers.properties
+
+# Native Image
+*.so
+*.dylib
+*.dll
+
+# Custom RPC endpoints (you may want to keep your own version)
+# config/rpc-endpoints.json

@@ -1,0 +1,83 @@
+### Blockchain Tokenizer API Examples
+### Use this file with REST Client extension in VSCode or IntelliJ HTTP Client
+
+@baseUrl = http://localhost:8080/api/v1
+@testAddress = 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+@recipientAddress = 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed
+
+### 1. Health Check
+GET http://localhost:8080/actuator/health
+
+### 2. Get Nonce for Address
+GET {{baseUrl}}/transactions/nonce/{{testAddress}}
+
+### 3. Get Current Gas Price
+GET {{baseUrl}}/transactions/gas-price
+
+### 4. Estimate Gas for Simple Transfer
+POST {{baseUrl}}/transactions/estimate-gas
+Content-Type: application/json
+
+{
+  "from": "{{testAddress}}",
+  "to": "{{recipientAddress}}",
+  "value": "1000000000000000000"
+}
+
+### 5. Create Simple ETH Transfer Transaction
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{
+  "from": "{{testAddress}}",
+  "to": "{{recipientAddress}}",
+  "value": "1000000000000000000",
+  "metadata": "Test transfer - 1 ETH"
+}
+
+### 6. Create Transaction with Contract Call
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{
+  "from": "{{testAddress}}",
+  "to": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+  "value": "0",
+  "data": "0x70a08231000000000000000000000000742d35cc6634c0532925a3b844bc9e7595f0beb",
+  "gasLimit": "50000",
+  "metadata": "DAI balanceOf call"
+}
+
+### 7. Deploy Simple Contract
+POST {{baseUrl}}/contracts/deploy
+Content-Type: application/json
+
+{
+  "from": "{{testAddress}}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060c78061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c806360fe47b11460375780636d4ce63c146051575b600080fd5b604f60048036038101906049919060a4565b6069565b005b60576073565b60405160609190607c565b60405180910390f35b8060008190555050565b60005481565b6000819050919050565b6000819050919050565b600081359050609e81608a565b92915050565b60006020828403121560b65760b5608565565b5b600060c284828501609056fea2646970667358221220045807f1c0c4c3b849f21f02741b4ffc2d1d4d4b4d4b4d4b4d4b4d4b4d4b4d64736f6c63430008130033",
+  "value": "0",
+  "metadata": "Simple storage contract deployment"
+}
+
+### 8. Calculate Future Contract Address
+GET {{baseUrl}}/contracts/calculate-address?deployerAddress={{testAddress}}&nonce=5
+
+### 9. Create Transaction with Custom Gas Parameters
+POST {{baseUrl}}/transactions
+Content-Type: application/json
+
+{
+  "from": "{{testAddress}}",
+  "to": "{{recipientAddress}}",
+  "value": "500000000000000000",
+  "gasLimit": "21000",
+  "maxPriorityFeePerGas": "2000000000",
+  "maxFeePerGas": "50000000000",
+  "metadata": "Transfer with custom gas"
+}
+
+### 10. Prometheus Metrics
+GET http://localhost:8080/actuator/prometheus
+
+### 11. Application Info
+GET http://localhost:8080/actuator/info

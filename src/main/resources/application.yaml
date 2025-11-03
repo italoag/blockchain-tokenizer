@@ -1,0 +1,123 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: blockchain-tokenizer
+
+  # Reactive Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      timeout: 3000ms
+      connect-timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+        compression.type: snappy
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:blockchain-tokenizer-group}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring.json.trusted.packages: "*"
+        isolation.level: read_committed
+
+# Blockchain Configuration
+blockchain:
+  # RPC Endpoints configuration file path
+  rpc:
+    config-path: ${RPC_ENDPOINTS_CONFIG_PATH:./config/rpc-endpoints.json}
+    request-timeout: 10000
+    connection-timeout: 5000
+    max-retry-attempts: 3
+    retry-delay-ms: 1000
+
+  # Chain Configuration
+  chain:
+    id: ${CHAIN_ID:1}  # 1 = Ethereum Mainnet, 11155111 = Sepolia
+    network-name: ${NETWORK_NAME:mainnet}
+
+  # Gas Configuration
+  gas:
+    price-buffer-percentage: 10  # Add 10% buffer to gas price
+    limit-buffer-percentage: 20  # Add 20% buffer to gas limit
+    max-priority-fee-per-gas: 2000000000  # 2 Gwei
+    max-fee-per-gas: 100000000000  # 100 Gwei
+
+  # Nonce Management
+  nonce:
+    cache-ttl-seconds: 300  # 5 minutes
+    lock-timeout-seconds: 10
+
+# Kafka Topics
+kafka:
+  topics:
+    tx-raw-for-signing: tx.raw.for-signing
+    tx-signed-ready: tx.signed.ready
+    tx-failed: tx.failed
+    tx-success: tx.success
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      rpcClient:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 30s
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 5s
+
+# Management and Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.blockchain.tokenizer: DEBUG
+    org.web3j: INFO
+    org.springframework.kafka: INFO
+    org.springframework.data.redis: INFO
+    reactor.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

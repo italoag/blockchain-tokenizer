@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Blockchain Tokenizer Microservice
+  blockchain-tokenizer:
+    build:
+      context: .
+      dockerfile: Dockerfile.jvm
+    container_name: blockchain-tokenizer
+    ports:
+      - "8080:8080"
+    environment:
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DATABASE=0
+
+      # Kafka
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_CONSUMER_GROUP=blockchain-tokenizer-group
+
+      # RPC Configuration
+      - RPC_ENDPOINTS_CONFIG_PATH=/app/config/rpc-endpoints-sepolia.json
+
+      # Chain Configuration
+      - CHAIN_ID=11155111  # Sepolia testnet
+      - NETWORK_NAME=sepolia
+
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=dev
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - blockchain-network
+    restart: unless-stopped
+
+  # Redis for nonce management
+  redis:
+    image: redis:7-alpine
+    container_name: blockchain-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - blockchain-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: blockchain-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - blockchain-network
+    restart: unless-stopped
+
+  # Kafka for transaction signing workflow
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: blockchain-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    depends_on:
+      - zookeeper
+    networks:
+      - blockchain-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Kafka UI for monitoring
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: blockchain-kafka-ui
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: blockchain-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - kafka
+    networks:
+      - blockchain-network
+    restart: unless-stopped
+
+  # Redis Commander for monitoring
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: blockchain-redis-commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - blockchain-network
+    restart: unless-stopped
+
+networks:
+  blockchain-network:
+    driver: bridge
+
+volumes:
+  redis-data:
